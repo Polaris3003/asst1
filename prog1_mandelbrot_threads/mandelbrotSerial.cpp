@@ -90,3 +90,24 @@ void mandelbrotSerial(
     }
 }
 
+void mandelbrotSerial2(
+    float x0, float y0, float x1, float y1,
+    int width, int height,
+    int startIdx, int numThreads,
+    int maxIterations,
+    int output[])
+{
+    float dx = (x1 - x0) / width;
+    float dy = (y1 - y0) / height;
+
+    for (int idx = startIdx; idx < width * height; idx += numThreads)
+    {
+        int i = idx % width;
+        int j = idx / width;
+        float x = x0 + i * dx;
+        float y = y0 + j * dy;
+
+        output[idx] = mandel(x, y, maxIterations);
+    }
+}
+
