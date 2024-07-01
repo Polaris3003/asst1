@@ -240,16 +240,56 @@ void clampedExpSerial(float* values, int* exponents, float* output, int N) {
   }
 }
 
-void clampedExpVector(float* values, int* exponents, float* output, int N) {
+void clampedExpVector(float *values, int *exponents, float *output, int N)
+{
+  __cs149_vec_float x;
+  __cs149_vec_int y;
+  __cs149_vec_float result;
+  __cs149_vec_int allOneInt = _cs149_vset_int(1);
+  __cs149_vec_int zeroInt = _cs149_vset_int(0);
+  __cs149_vec_float maxVal = _cs149_vset_float(9.999999f);
+  __cs149_mask maskAll, maskIsNotZero, maskIsZero;
 
-  //
-  // CS149 STUDENTS TODO: Implement your vectorized version of
-  // clampedExpSerial() here.
-  //
-  // Your solution should work for any value of
-  // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
-  //
-  
+  for (int i = 0; i < N; i += VECTOR_WIDTH)
+  {
+    if (i + VECTOR_WIDTH > N)
+    {
+      maskAll = _cs149_init_ones(N - i);
+    }
+    else
+    {
+      maskAll = _cs149_init_ones();
+    }
+    maskIsZero = _cs149_init_ones(0);
+    
+    _cs149_vload_float(x, values + i, maskAll); // x = values[i];
+    _cs149_vmove_float(result, x, maskAll);
+    _cs149_vload_int(y, exponents + i, maskAll); // y = exponents[i];
+
+    _cs149_veq_int(maskIsZero, y, zeroInt, maskAll); // if (y == 0) {
+    _cs149_vset_float(result, 1.f, maskIsZero);      //   output[i] = 1.f;
+
+    maskIsNotZero = _cs149_mask_not(maskIsZero); // } else {
+
+    while (1)
+    {
+      _cs149_vsub_int(y, y, allOneInt, maskIsNotZero); // count = y - 1
+
+      _cs149_vgt_int(maskIsNotZero, y, zeroInt, maskIsNotZero); // if (count > 0) {
+      int num = _cs149_cntbits(maskIsNotZero);
+      if (num == 0)
+      {
+        break;
+      }
+      _cs149_vmult_float(result, result, x, maskIsNotZero); //   resulte *= x;
+    }
+
+    maskIsZero = _cs149_init_ones(0);
+    _cs149_vgt_float(maskIsZero, result, maxVal, maskAll); // if (result > 9.999999f) {
+    _cs149_vset_float(result, 9.999999f, maskIsZero);      //   result = 9.999999f;
+
+    _cs149_vstore_float(output + i, result, maskAll);
+  }
 }
 
 // returns the sum of all elements in values
